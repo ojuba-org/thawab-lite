@@ -1,0 +1,8 @@
+- report all `pyodbc`/`pypyodbc`/`odbc`/`mdbtools` bugs
+- open each book in different process
+- implement search
+- implement `about`
+- move `about` into Hamburger button menu
+- implement table of content hierarchy
+- update TOC position when navigating next/previous/jump-to-page
+
