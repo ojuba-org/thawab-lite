@@ -1,6 +1,8 @@
 # Thawab-Lite - Shamela BOK reader
 
+On-the-fly reader for [Shamela](http://shamela.ws/) BOK files
 
+![screenshot](screenshot.png)
 
 ## Dependencies
 
