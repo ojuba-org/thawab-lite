@@ -3,6 +3,7 @@ import os
 import sys
 import re
 import subprocess
+import time
 import logging
 import gi
 
@@ -176,7 +177,18 @@ class MyApp(object):
         rows = [ row_to_dict(row, cols) for row in cursor.fetchall() ]
         rows.sort(key=lambda r:(r['id'], r['sub']))
         def cb(r):
-            for row in r: self.toc_store.append(None, (row['tit'], row['lvl'], row['sub'],  row['id'],))
+            t1=time.time()
+            parents_stack = [None]
+            levels_stack = []
+            for row in r:
+                level = row['lvl']
+                while(levels_stack and levels_stack[-1]>=level):
+                    levels_stack.pop()
+                    parents_stack.pop()
+                it = self.toc_store.append(parents_stack[-1], (row['tit'], row['lvl'], row['sub'],  row['id'],))
+                parents_stack.append(it)
+                levels_stack.append(level)
+            logger.info('building took %r', time.time()-t1)
         # it's a store, not UI, so we might be able to edit it directly
         # cb(rows)
         # if not then it's added like this
