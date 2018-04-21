@@ -188,7 +188,7 @@ class MyApp(object):
                 it = self.toc_store.append(parents_stack[-1], (row['tit'], row['lvl'], row['sub'],  row['id'],))
                 parents_stack.append(it)
                 levels_stack.append(level)
-            logger.info('building took %r', time.time()-t1)
+            logger.info('building toc took %r', time.time()-t1)
         # it's a store, not UI, so we might be able to edit it directly
         # cb(rows)
         # if not then it's added like this

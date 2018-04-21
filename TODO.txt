@@ -7,6 +7,5 @@
 - an action to toggle side bar
 - hot keys for next/previous
 - page down navigate to next when end of text is reached
-- implement table of content hierarchy
 - update TOC position when navigating next/previous/jump-to-page
 
