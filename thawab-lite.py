@@ -10,6 +10,7 @@ import gi
 from six import string_types
 from six.moves.queue import Queue, Empty
 
+from itertools import islice
 from threading import Thread
 
 gi.require_version("Gtk", "3.0")
@@ -180,14 +181,19 @@ class MyApp(object):
             t1=time.time()
             parents_stack = [None]
             levels_stack = []
-            for row in r:
-                level = row['lvl']
-                while(levels_stack and levels_stack[-1]>=level):
-                    levels_stack.pop()
-                    parents_stack.pop()
-                it = self.toc_store.append(parents_stack[-1], (row['tit'], row['lvl'], row['sub'],  row['id'],))
-                parents_stack.append(it)
-                levels_stack.append(level)
+            loop_it=iter(r)
+            while(True):
+                l=list(islice(loop_it, 1000))
+                if not l: break
+                for row in r:
+                    level = row['lvl']
+                    while(levels_stack and levels_stack[-1]>=level):
+                        levels_stack.pop()
+                        parents_stack.pop()
+                    it = self.toc_store.append(parents_stack[-1], (row['tit'], row['lvl'], row['sub'],  row['id'],))
+                    parents_stack.append(it)
+                    levels_stack.append(level)
+                Gtk.main_iteration_do(False)
             logger.info('building toc took %r', time.time()-t1)
         # it's a store, not UI, so we might be able to edit it directly
         # cb(rows)
