@@ -232,12 +232,14 @@ class MyApp(object):
             if self.info is None:
                 self.queue.put(('open', {'filename': filename},))
             else:
+                # TODO: use sys.executable, sys.argv[0], filename
                 MyApp(filename)
 
 files = sys.argv[1:]
 if not files:
     MyApp()
 else:
+    # TODO: use sys.executable, sys.argv[0], filename
     for f in files:
         MyApp(f)
 Gtk.main()
