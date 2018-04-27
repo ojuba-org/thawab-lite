@@ -62,6 +62,19 @@ os.environ['MDB_ICONV'] = 'UTF-8'
 sql_comments_re = re.compile(r'^--.*$', re.M)
 schema_re = re.compile(r'create +table +([^\(]*) +\((.*)\);', re.I | re.M | re.S)
 
+def spawn_clone(filename):
+    # NOTE: due to bug in MDB Tools and/or pyodbc, let's open a different process
+    # App(filename)
+    try: tty_path = os.ttyname(1)
+    except OSError: tty_path = '/dev/null'
+    subprocess.Popen(
+        [sys.executable, sys.argv[0], filename],
+        stdin=open(tty_path, 'r'),
+        stdout=open(tty_path, 'w'),
+        stderr=open(tty_path, 'w'),
+        preexec_fn=os.setpgrp
+    )
+
 def get_table_col(filename, table_name):
     """
     because ODBC's cursor.columns(table_name) is broken, we use command line
@@ -232,15 +245,14 @@ class MyApp(object):
             if self.info is None:
                 self.queue.put(('open', {'filename': filename},))
             else:
-                # TODO: use sys.executable, sys.argv[0], filename
-                MyApp(filename)
+                spawn_clone(filename)
 
 files = sys.argv[1:]
 if not files:
     MyApp()
 else:
-    # TODO: use sys.executable, sys.argv[0], filename
-    for f in files:
-        MyApp(f)
+    MyApp(files[0])
+    for f in files[1:]:
+        spawn_clone(f)
 Gtk.main()
 
