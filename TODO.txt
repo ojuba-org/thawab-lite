@@ -2,7 +2,6 @@
 - check if mdb-tools are installed if not show dialog
 - implement search
 - implement `about`
-- move `about` into Hamburger button menu
 - an action to toggle side bar
 - hot keys for next/previous
 - page down navigate to next when end of text is reached
