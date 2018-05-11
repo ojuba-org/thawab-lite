@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import re
@@ -39,13 +41,13 @@ else:
 str_types = (unicode, bytes)
 
 def touni(s, enc='utf8', err='strict'):
-    return s.decode(enc, err) if isinstance(s, str_types) else unicode(s)
+    return s.decode(enc, err) if isinstance(s, bytes) else unicode(s)
 
 def tob(s, enc='utf-8'):
-    return s.encode(enc) if isinstance(s, str_types) else bytes(s)
+    return s.encode(enc) if isinstance(s, basestring) else bytes(s)
 
 def cell_decode(a):
-    return touni(a) if isinstance(a, str_types) else a
+    return touni(a) if isinstance(a, bytes) else a
 
 def row_to_dict(row, cols):
     return dict([(i,cell_decode(j)) for i,j in zip(cols, row)])
@@ -137,9 +139,35 @@ class MyApp(object):
         self.body = builder.get_object("body")
         self.toc_store = builder.get_object("toc_store")
         self.toc_tree = builder.get_object("toc_tree")
+        self.search_entry = builder.get_object("search_entry")
+        self.popover1 = builder.get_object("popover1")
+        self.search_btn = builder.get_object("search_btn")
+        self.page_btn = builder.get_object("page_btn")
+        self.hadith_btn = builder.get_object("hadith_btn")
         self.window.show()
         if filename is not None:
             self.open(filename)
+
+    def on_search_entry_key_release_event(self, w, event):
+        # keyval (True, 65364)
+        if event.get_scancode()==116:
+            self.update_search()
+            self.search_btn.grab_focus()
+
+    def on_search_entry_focus_out_event(self, w, event):
+        if not self.popover1.get_focus_child(): self.popover1.popdown()
+
+    def update_search(self):
+        txt=touni(self.search_entry.get_text())
+        # self.popover1.set_modal(False)
+        self.popover1.set_relative_to(self.search_entry)
+        self.popover1.popup()
+        self.search_btn.set_label(u"البحث عن [{}]".format(txt))
+        self.page_btn.set_label(u"صفحة [{}]".format(txt))
+        self.hadith_btn.set_label(u"حديث رقم [{}]".format(txt))
+
+    def on_search_entry_changed(self, w):
+        self.update_search()
 
     def on_info_btn_clicked(self, w):
         self.goto_page(0)
@@ -151,6 +179,7 @@ class MyApp(object):
         self.goto_page(self.page_id+1)
     
     def on_search_entry_activate(self, w):
+        self.popover1.popdown()
         text = w.get_text()
         page_id = try_int(text)
         if page_id is not None: self.goto_page(page_id)
