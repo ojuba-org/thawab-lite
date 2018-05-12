@@ -125,6 +125,8 @@ class MyApp(object):
         self.file_dlg = None
         self.info = None
         self.page_id = 0
+        self.has_hadith_numbers = False
+        self.has_ayat = False
         self.keep_running = True
         self.queue = Queue()
         thread = Thread(target=self.worker_loop)
@@ -165,6 +167,8 @@ class MyApp(object):
         self.search_btn.set_label(u"البحث عن [{}]".format(txt))
         self.page_btn.set_label(u"صفحة [{}]".format(txt))
         self.hadith_btn.set_label(u"حديث رقم [{}]".format(txt))
+        # TODO: check has_hadith_numbers and has_ayat
+
 
     def on_search_entry_changed(self, w):
         self.update_search()
@@ -214,6 +218,10 @@ class MyApp(object):
         #cols = cursor.columns('Main') # does not work
         self.id = int(self.info['BkId'])
         cursor = db.cursor()
+        tbl_toc = 'b{}'.format(self.info['BkId'])
+        cols = get_table_col(self.filename, tbl_body)
+        self.has_hadith_numbers = 'Hno' in cols
+        self.has_ayat = 'sora' in cols and 'aya' in cols
         tbl_toc = 't{}'.format(self.info['BkId'])
         cols = get_table_col(filename, tbl_toc)
         cursor.execute(u'SELECT {} FROM {}'.format(','.join(cols), tbl_toc))
