@@ -250,7 +250,7 @@
     <property name="modal">False</property>
     <property name="transitions_enabled">False</property>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="popover1_box">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>

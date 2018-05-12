@@ -146,29 +146,46 @@ class MyApp(object):
         self.search_btn = builder.get_object("search_btn")
         self.page_btn = builder.get_object("page_btn")
         self.hadith_btn = builder.get_object("hadith_btn")
+        self.popover1_box = builder.get_object("popover1_box")
+        self.search_menu_btns = [self.search_btn, self.page_btn, self.hadith_btn]
         self.window.show()
         if filename is not None:
             self.open(filename)
 
     def on_search_entry_key_release_event(self, w, event):
         # keyval (True, 65364)
-        if event.get_scancode()==116:
+        scancode = event.get_scancode()
+        if scancode == 116:
             self.update_search()
             self.search_btn.grab_focus()
+        elif scancode == 9:
+            self.popover1.popdown()
 
     def on_search_entry_focus_out_event(self, w, event):
         if not self.popover1.get_focus_child(): self.popover1.popdown()
-
+    
     def update_search(self):
         txt=touni(self.search_entry.get_text())
-        # self.popover1.set_modal(False)
+        entered_i = try_int(txt)
+        if entered_i is None:
+            self.search_btn.set_label(u"البحث عن [{}]".format(txt))
+            self.popover1_box.reorder_child(self.search_btn, 0)
+            self.page_btn.set_sensitive(False)
+            self.hadith_btn.set_sensitive(False)
+        else:
+            self.page_btn.set_sensitive(True)
+            self.hadith_btn.set_sensitive(True)
+            self.page_btn.set_label(u"صفحة [{}]".format(txt))
+            self.hadith_btn.set_label(u"حديث رقم [{}]".format(txt))
+            if self.has_hadith_numbers:
+                self.popover1_box.reorder_child(self.hadith_btn, 0)
+                self.popover1_box.reorder_child(self.page_btn, 1)
+            else:
+                self.popover1_box.reorder_child(self.page_btn, 0)
+                self.popover1_box.reorder_child(self.hadith_btn, 1)
+            self.search_btn.set_label(u"البحث عن [{}]".format(txt))
         self.popover1.set_relative_to(self.search_entry)
         self.popover1.popup()
-        self.search_btn.set_label(u"البحث عن [{}]".format(txt))
-        self.page_btn.set_label(u"صفحة [{}]".format(txt))
-        self.hadith_btn.set_label(u"حديث رقم [{}]".format(txt))
-        # TODO: check has_hadith_numbers and has_ayat
-
 
     def on_search_entry_changed(self, w):
         self.update_search()
@@ -218,7 +235,7 @@ class MyApp(object):
         #cols = cursor.columns('Main') # does not work
         self.id = int(self.info['BkId'])
         cursor = db.cursor()
-        tbl_toc = 'b{}'.format(self.info['BkId'])
+        tbl_body = 'b{}'.format(self.info['BkId'])
         cols = get_table_col(self.filename, tbl_body)
         self.has_hadith_numbers = 'Hno' in cols
         self.has_ayat = 'sora' in cols and 'aya' in cols
