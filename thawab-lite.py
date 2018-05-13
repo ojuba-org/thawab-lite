@@ -16,7 +16,7 @@ from itertools import islice
 from threading import Thread
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, Gdk, GLib
 
 import pypyodbc as pyodbc
 #try: import pypyodbc as pyodbc
@@ -118,6 +118,8 @@ def get_filename(parent=None):
     if file_dlg.run()!=Gtk.ResponseType.ACCEPT: return None
     return file_dlg.get_filename()
 
+sura_aya_re = re.compile(ur'(\d+):(\d+)')
+
 class MyApp(object):
     instances = 0
     def __init__(self, filename=None):
@@ -146,37 +148,50 @@ class MyApp(object):
         self.search_btn = builder.get_object("search_btn")
         self.page_btn = builder.get_object("page_btn")
         self.hadith_btn = builder.get_object("hadith_btn")
+        self.aya_btn = builder.get_object("aya_btn")
         self.popover1_box = builder.get_object("popover1_box")
-        self.search_menu_btns = [self.search_btn, self.page_btn, self.hadith_btn]
+        self.search_menu_btns = [self.search_btn, self.page_btn, self.hadith_btn, self.aya_btn]
         self.window.show()
         if filename is not None:
             self.open(filename)
 
     def on_search_entry_key_release_event(self, w, event):
-        # keyval (True, 65364)
-        scancode = event.get_scancode()
-        if scancode == 116:
+        __, keyval = event.get_keyval()
+        if keyval == Gdk.KEY_Down or keyval == Gdk.KEY_KP_Down:
             self.update_search()
-            self.search_btn.grab_focus()
-        elif scancode == 9:
+            ch=self.popover1_box.get_children()
+            if ch: ch[0].grab_focus()
+        elif keyval == Gdk.KEY_Escape:
             self.popover1.popdown()
 
     def on_search_entry_focus_out_event(self, w, event):
         if not self.popover1.get_focus_child(): self.popover1.popdown()
     
     def update_search(self):
-        txt=touni(self.search_entry.get_text())
+        txt=touni(self.search_entry.get_text()).strip()
+        if not txt:
+            self.popover1.popdown()
+            return
         entered_i = try_int(txt)
-        if entered_i is None:
+        m = sura_aya_re.match(txt) if self.has_ayat else None
+        if m:
+            for btn in self.search_menu_btns: btn.hide()
+            self.aya_btn.show()
+            self.aya_btn.set_label(u"سورة {} آية {}".format(m.group(1), m.group(2)))
+        elif entered_i is None:
+            for btn in self.search_menu_btns: btn.hide()
+            self.search_btn.show()
             self.search_btn.set_label(u"البحث عن [{}]".format(txt))
             self.popover1_box.reorder_child(self.search_btn, 0)
-            self.page_btn.set_sensitive(False)
-            self.hadith_btn.set_sensitive(False)
         else:
-            self.page_btn.set_sensitive(True)
-            self.hadith_btn.set_sensitive(True)
+            self.search_btn.show()
+            self.page_btn.show()
+            self.hadith_btn.show()
+            if self.has_ayat: self.aya_btn.show()
+            else: self.aya_btn.hide()
             self.page_btn.set_label(u"صفحة [{}]".format(txt))
             self.hadith_btn.set_label(u"حديث رقم [{}]".format(txt))
+            self.aya_btn.set_label(u"سورة رقم [{}]".format(txt))
             if self.has_hadith_numbers:
                 self.popover1_box.reorder_child(self.hadith_btn, 0)
                 self.popover1_box.reorder_child(self.page_btn, 1)
