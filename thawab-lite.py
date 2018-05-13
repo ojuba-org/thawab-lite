@@ -237,8 +237,26 @@ class MyApp(object):
         cursor = db.cursor()
         tbl_body = 'b{}'.format(self.info['BkId'])
         cols = get_table_col(self.filename, tbl_body)
-        self.has_hadith_numbers = 'Hno' in cols
-        self.has_ayat = 'sora' in cols and 'aya' in cols
+        if 'Hno' in cols:
+            # take sample of 100 page to see if it has Hno
+            cursor.execute(u'SELECT Hno FROM {}'.format(tbl_body))
+            for i in range(100):
+                r = cursor.fetchone()
+                if r is None: break
+                if try_int(r[0]) is not None: 
+                    print("has Hno")
+                    self.has_hadith_numbers = True
+                    break
+        if 'sora' in cols and 'aya' in cols:
+            # take sample of 100 page to see if it has ayat
+            cursor.execute(u'SELECT sora, aya FROM {}'.format(tbl_body))
+            for i in range(100):
+                r = cursor.fetchone()
+                if r is None: break
+                if try_int(r[0]) is not None and try_int(r[1]) is not None: 
+                    print("has ayat")
+                    self.has_ayat = True
+                    break
         tbl_toc = 't{}'.format(self.info['BkId'])
         cols = get_table_col(filename, tbl_toc)
         cursor.execute(u'SELECT {} FROM {}'.format(','.join(cols), tbl_toc))
