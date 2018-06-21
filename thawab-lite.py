@@ -16,7 +16,7 @@ from itertools import islice
 from threading import Thread
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, Pango
 
 import pypyodbc as pyodbc
 #try: import pypyodbc as pyodbc
@@ -120,6 +120,21 @@ def get_filename(parent=None):
 
 sura_aya_re = re.compile(ur'(\d+):(\d+)')
 
+font_dlg = None
+def get_font_name(parent=None):
+    global font_dlg
+    if font_dlg:
+        font_dlg.set_transient_for(parent)
+        if font_dlg.run()!=Gtk.ResponseType.OK: return None
+        return font_dlg.get_font_name()
+    font_dlg = Gtk.FontSelectionDialog(
+        "Select font style", 
+        parent= parent)
+    font_dlg.connect('delete-event', lambda w,*a: w.hide() or True)
+    font_dlg.connect('response', lambda w,*a: w.hide() or True)
+    if font_dlg.run()!=Gtk.ResponseType.OK: return None
+    return font_dlg.get_font_name()
+
 class MyApp(object):
     instances = 0
     def __init__(self, filename=None):
@@ -141,6 +156,7 @@ class MyApp(object):
         self.window = builder.get_object("main_win")
         self.header = builder.get_object("header")
         self.body = builder.get_object("body")
+        self.side_panel = builder.get_object("side_panel")
         self.toc_store = builder.get_object("toc_store")
         self.toc_tree = builder.get_object("toc_tree")
         self.search_entry = builder.get_object("search_entry")
@@ -239,7 +255,7 @@ class MyApp(object):
         self.filename = filename
         cols = get_table_col(filename, 'Main')
         self.db = db = pyodbc.connect(
-            tob('DRIVER=libmdbodbc.so;DBQ={}'.format(filename)),
+            tob('DRIVER=libmdbodbc.so;DBQ={}'.format(filename).decode("utf-8")),
             readonly=True, ansi=True, unicode_results=False,
         )
         cursor = db.cursor()
@@ -333,6 +349,21 @@ class MyApp(object):
                 self.queue.put(('open', {'filename': filename},))
             else:
                 spawn_clone(filename)
+
+    def on_toggle_side_panel_mnu_activate(self, w):
+        if self.side_panel.get_visible(): self.side_panel.hide()
+        else: self.side_panel.show()
+        
+
+    def on_font_mnu_activate(self, w):
+        font_name = get_font_name(self.window)
+        if font_name:
+            #TODO: add it to queue if necessary
+            #TODO: Make an option for changing only the body box font or both body box and side panel
+            font_desc = Pango.FontDescription(font_name)
+            if font_desc:
+                self.body.modify_font(font_desc)
+                self.toc_tree.modify_font(font_desc)
 
 files = sys.argv[1:]
 if not files:
